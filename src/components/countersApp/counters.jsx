@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import Counter from './counter';
 
 const Counters = ({onReiniciar,state,onBorrar,onIncrementar,onAdd,addValueInput}) => {

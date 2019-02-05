@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 
 class Counter extends Component {
+	componentWillUnmount(){
+	};
 	render(){
+
 		const {onIncrementar,counter,onBorrar} = this.props 
 		return (
 			<div>

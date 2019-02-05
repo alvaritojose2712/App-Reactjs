@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import ReactDOM from 'react-dom';
 import Counters from './counters';
 import Navbar from './navbar';
 
@@ -13,6 +12,9 @@ class App extends Component{
 		],
 		valAdd: "",
 	};
+
+	componentDidMount(){
+	}
 	manejadorBorrar = (id) => {
 		let counters = this.state.counters.filter(c => c.id!==id )
 		this.setState({ counters })
@@ -38,13 +40,13 @@ class App extends Component{
 			let i = countersNew.length;
 			countersNew.push({id: i+=1, value: parseInt(valAdd)});
 			this.setState({counters: countersNew, valAdd: ""});
-
 		}
 	}
 	addValueInput = (e) => {
 		this.setState({valAdd: e.target.value})
 	}
 	render(){
+
 		return (
 			<div>
 				<Navbar counterNum={this.state.counters.filter(c=>c.value>0).length}/>

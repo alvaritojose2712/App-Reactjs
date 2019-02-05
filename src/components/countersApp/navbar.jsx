@@ -1,15 +1,15 @@
-import React, {Component} from 'react';
+import React from 'react';
 
 
 const Navbar = ({counterNum}) => {
 	return (
 		<nav className="navbar navbar-light bg-light">
-		  <a className="navbar-brand" href="#">
+		  <button className="navbar-brand" href="#">
 		  	<h1> Número de contadores: <span className='badge badge-primary'>{counterNum}</span></h1>
-		  </a>
-		  <a className="navbar-brand">
+		  </button>
+		  <button className="navbar-brand">
 			Simple_App - ReactJS
-		  </a>
+		  </button>
 		</nav>
 	)
 }
