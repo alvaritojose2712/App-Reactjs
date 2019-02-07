@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import Countersapp from './components/countersApp/app';
 import Reduxapp from './components/reduxApp/app';
 import txt from './components/txt/app';
+import Home from './components/home/app';
 
 
 
@@ -14,6 +15,7 @@ class App extends Component{
 		return (
 			<Router>
 				<Switch>
+					<Route exact path="/" component={Home}/>
 					<Route path="/counter" component={Countersapp}/>
 					<Route path="/redux" component={Reduxapp}/>
 					<Route path="/txtGenerator" component={txt}/>
