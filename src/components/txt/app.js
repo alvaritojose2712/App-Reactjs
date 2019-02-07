@@ -9,10 +9,12 @@ export default class App extends Component{
 			text:``,
 			file: [],
 			selectCol:null,
-			rellenarCon:"0",
+			rellenarCon:"",
 			salida:[],
 			arrMasLargo:{largo:0,indice:0},
-			permisoDescargar:false
+			permisoDescargar:false,
+			separarCols:";",
+			reemplazarCaracteres:".,- "
 		}
 		this.handleChange = this.handleChange.bind(this)
 		this.moveCol = this.moveCol.bind(this)
@@ -25,6 +27,10 @@ export default class App extends Component{
 		this.descargarTxt = this.descargarTxt.bind(this)
 		this.allDelete = this.allDelete.bind(this)
 		this.uniDelete = this.uniDelete.bind(this)
+		this.separarColFun = this.separarColFun.bind(this)
+		this.reemplazarCaracteresFun = this.reemplazarCaracteresFun.bind(this)
+		this.createFile = this.createFile.bind(this)
+
 	}
 	handleChange(e){
 		let copy = JSON.parse(JSON.stringify(this.state.file))
@@ -38,7 +44,7 @@ export default class App extends Component{
 		this.setState({file:copy},()=>this.procesar());	
 	}
 	moveCol(e,x){
-		
+		// console.log(x)
 		const {selectCol,file} = this.state
 		if (selectCol!==null) {
 			let copy = JSON.parse(JSON.stringify(file))
@@ -63,6 +69,36 @@ export default class App extends Component{
 	}
 	rellenarCon(e){
 		this.setState({rellenarCon:e.target.value.replace(/\D/g,"")},()=>this.procesar());
+	}
+	separarColFun(e){
+		this.setState({separarCols:e.target.value},()=>this.procesar());
+	}
+	reemplazarCaracteresFun(e){
+		if (!e.target.value.length) {
+			this.createFile()
+		}else{
+
+
+			let reemplazar = new RegExp(`[${e.target.value}]`,"g")
+
+			let copy = JSON.parse(JSON.stringify(this.state.file))
+			let newArr = []
+			copy = copy.map((e,i)=>{
+				let arr1 = []
+				e.map((ee,ii)=>{
+					arr1.push({...ee,valor:ee.valor.replace(reemplazar,"")})
+				})
+				newArr.push(arr1)
+
+			})
+
+			this.setState({
+				file:newArr 
+			},()=>this.procesar());
+		}
+		this.setState({reemplazarCaracteres:e.target.value});
+
+
 	}
 	addConstantes(){
 		const {despuesDeConstante,valConstante} = this.refs
@@ -141,11 +177,13 @@ export default class App extends Component{
 			file:copy 
 		},()=>this.procesar());
 	}
-	selectFile(e){
+	selectFile(e,text=null){
 		  const _default = {
 		  	0:[20,8,17,4],
 		  	1:[4,12,20,10,1],
 		  }
+
+
 		  var archivo = e.target.files[0];
 		  if (!archivo) {
 		    return;
@@ -154,38 +192,42 @@ export default class App extends Component{
 		  lector.onload = e => {
 		    var contenido = e.target.result;
 			this.setState({
-				text:contenido 
-			},()=>{
-
-				let arrMasLargo = 0
-				let fila
-				let fileClean = this
-				.state
-				.text
-				.replace(/[-/.,*+E\r]/g,"")
-				.split(/\n/)
-				.map(e=>e?e.split(/\t/).filter(ee=>ee&&ee.length):null)
-				.filter(e=>e&&e.length)
-				.map((e,i)=>{
-					fila = (i===0)?0:1
-
-					arrMasLargo = arrMasLargo.largo>=e.length?arrMasLargo:{largo:e.length,indice:i} 
-					return e.map((ee,ii)=>{
-						let colLimit = _default[fila][ii]?_default[fila][ii]:0
-						return {valor:ee,limite:colLimit} 
-					})
-				})
-				this.setState({
-					file: fileClean,
-					arrMasLargo:arrMasLargo,
-				},()=>this.procesar());
-
-				
-			});
+				text:contenido
+			},this.createFile);
 		  };
 		  lector.readAsText(archivo,"ISO-8859-1");
 
 	}
+	createFile(){
+		
+
+		let arrMasLargo = 0
+		let fila
+		let fileClean = this
+		.state
+		.text
+		.replace(/\r/g,"")
+		.split(/\n/)
+		.map(e=>e?e.split(/\t/).filter(ee=>ee&&ee.length):null)
+		.filter(e=>e&&e.length)
+		.map((e,i)=>{
+			fila = (i===0)?0:1
+
+			arrMasLargo = arrMasLargo.largo>=e.length?arrMasLargo:{largo:e.length,indice:i} 
+			return e.map((ee,ii)=>{
+				// let colLimit = _default[fila][ii]?_default[fila][ii]:0
+				return {valor:ee,limite:100} 
+			})
+		})
+		this.setState({
+			file: fileClean,
+			arrMasLargo:arrMasLargo,
+		},()=>this.procesar());
+
+				
+			
+	}
+
 	procesar(){
 		try{
 			let salida = []
@@ -196,7 +238,9 @@ export default class App extends Component{
 					if (ee&&typeof ee === "object"&&Object.keys(ee).length) {
 						let tab = ee.valor
 						if (parseInt(ee.limite)-tab.length<0) throw `Error: campo ${ii}x${i} sobrepasa el límite especificado`;
-						arr.push(this.multi_str(parseInt(ee.limite)-tab.length)+tab.toString())
+						let sep = !ii?"":this.state.separarCols
+
+						arr.push(sep+this.multi_str(parseInt(ee.limite)-tab.length)+tab.toString())
 					}
 					
 				})
@@ -273,7 +317,7 @@ export default class App extends Component{
 								Agregar	 
 							</button>
 						</div>
-							
+						
 						<div className="mb-5">
 							<h3>Rellenar con: </h3>
 							<input 
@@ -282,6 +326,23 @@ export default class App extends Component{
 							className="form-control"
 							onChange={this.rellenarCon}/>
 						</div>
+						<div className="mb-5">
+							<h3>Separar columnas por: </h3>
+							<input 
+							placeholder="Separar columnas por..." 
+							value={this.state.separarCols}
+							className="form-control"
+							onChange={this.separarColFun}/>
+						</div>
+						<div className="mb-5">
+							<h3>Eliminar los siguientes carácteres: </h3>
+							<input 
+							placeholder="Eliminar los siguientes carácteres..." 
+							value={this.state.reemplazarCaracteres}
+							className="form-control"
+							onChange={this.reemplazarCaracteresFun}/>
+						</div>
+						
 					</div>
 					<div className="col table-responsive p-2">
 						<h1>TXT Generator</h1>
@@ -365,7 +426,7 @@ export default class App extends Component{
 																><i className="fa fa-close"></i></button>
 																<button
 																className="btn btn-warning"
-																onClick={()=>this.moveCol(ii)}
+																onClick={(e)=>this.moveCol(e,ii)}
 																>{ee.valor}</button>
 															</React.Fragment>
 															:<React.Fragment>
@@ -375,7 +436,7 @@ export default class App extends Component{
 																><i className="fa fa-close"></i></button>
 																<button
 																className="btn btn-danger"
-																onClick={()=>this.moveCol(ii)}
+																onClick={(e)=>this.moveCol(e,ii)}
 																>{ee.valor}</button>
 																<input
 																	className="form-control text-center o-3"
