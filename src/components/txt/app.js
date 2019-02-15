@@ -13,8 +13,8 @@ export default class App extends Component{
 			salida:[],
 			arrMasLargo:{largo:0,indice:0},
 			permisoDescargar:false,
-			separarCols:";",
-			reemplazarCaracteres:".,- "
+			separarCols:"",
+			reemplazarCaracteres:""
 		}
 		this.handleChange = this.handleChange.bind(this)
 		this.moveCol = this.moveCol.bind(this)
@@ -30,6 +30,7 @@ export default class App extends Component{
 		this.separarColFun = this.separarColFun.bind(this)
 		this.reemplazarCaracteresFun = this.reemplazarCaracteresFun.bind(this)
 		this.createFile = this.createFile.bind(this)
+		this.useConfig = this.useConfig.bind(this)
 
 	}
 	handleChange(e){
@@ -97,8 +98,6 @@ export default class App extends Component{
 			},()=>this.procesar());
 		}
 		this.setState({reemplazarCaracteres:e.target.value});
-
-
 	}
 	addConstantes(){
 		const {despuesDeConstante,valConstante} = this.refs
@@ -199,8 +198,6 @@ export default class App extends Component{
 
 	}
 	createFile(){
-		
-
 		let arrMasLargo = 0
 		let fila
 		let fileClean = this
@@ -223,16 +220,15 @@ export default class App extends Component{
 			file: fileClean,
 			arrMasLargo:arrMasLargo,
 		},()=>this.procesar());
-
-				
-			
 	}
 
 	procesar(){
 		try{
+			let arrMasLargo = 0
 			let salida = []
 			const {file} = this.state
 			file.map((e,i)=>{
+				arrMasLargo = arrMasLargo.largo>=e.length?arrMasLargo:{largo:e.length,indice:i} 
 				let arr = []
 				e.map((ee,ii)=>{
 					if (ee&&typeof ee === "object"&&Object.keys(ee).length) {
@@ -245,8 +241,9 @@ export default class App extends Component{
 					
 				})
 				salida.push(arr)
+			
 			})
-			this.setState({salida:salida,permisoDescargar:true});
+			this.setState({salida:salida,permisoDescargar:true,arrMasLargo:arrMasLargo,});
 		}catch(err){
 			console.log(err)
 			this.setState({
@@ -271,7 +268,28 @@ export default class App extends Component{
 			                     + encodeURIComponent(str);
 		}
 	}
-
+	useConfig(){
+		let copy = JSON.parse(JSON.stringify(this.state.file))
+		const _default = {
+		  	0:[20,8,17,4],
+		  	1:[4,12,20,10,{valor:"00"},{valor:"1"},{valor:"00000"}],
+		}
+		const _defaultConst = []
+		let row;
+		copy.map((e,i)=>{
+			e.map((ee,ii)=>{
+				row = !i?0:1 
+				if(typeof _default[row][ii]==="object"){
+					// e.splice(ii,0,{const:true,limite:_default[row][ii].length,valor:_default[row][ii]})
+				}else{
+					ee.limite = _default[row][ii]
+				}
+			})
+		})
+		this.setState({
+			file:copy 
+		},()=>this.procesar());
+	}
 	render(){
 		const {file,salidaEstructura,constantes,salida,arrMasLargo} = this.state
 					
@@ -292,13 +310,20 @@ export default class App extends Component{
 								<select ref="despuesDeConstante" className="form-control">
 									{
 										file.length&&file[arrMasLargo.indice].length
-										?file[arrMasLargo.indice].map((ee,ii)=>
-											<option 
-											value={ii}	
-											key={ii}>
-												{ii+1}
+										?<React.Fragment>
+											{
+												file[arrMasLargo.indice].map((ee,ii)=>
+													<option 
+													value={ii}	
+													key={ii}>
+														{ii+1}
+													</option>
+												)								
+											}
+											<option value={file[arrMasLargo.indice].length}>
+												{file[arrMasLargo.indice].length+1}
 											</option>
-										)								
+										</React.Fragment>
 										:null
 										
 									}
@@ -317,7 +342,9 @@ export default class App extends Component{
 								Agregar	 
 							</button>
 						</div>
-						
+						<div className="mb-5">
+							<button className="btn btn-danger" onClick={()=>this.useConfig()}>Usar configuracion de Banco Bicentenario</button>
+						</div>
 						<div className="mb-5">
 							<h3>Rellenar con: </h3>
 							<input 
